@@ -3,10 +3,13 @@
 * SNV and indel calling on aligned reads using DeepVariant
 */
 process deepvariant {
-    label 'private_node'
+    //label 'private_node'
     label 'deepvariant'
     label 'time_high'
     label 'mem_high'
+    //label 'time_low'
+    //label 'mem_low'
+    label 'cpu_low'
     label ( workflow.profile.contains('qsub') ? null: 'cpu_high' )
 
     stageInMode 'copy'
@@ -20,7 +23,7 @@ process deepvariant {
     path genomeref_index
 
     output:
-    path "${params.sampleid}_deepvariant.vcf.gz", emit: indel_snv_vcf
+    path "${params.sampleid}_deepvariant.vcf.gz", emit: snv_indel_vcf
     path "${params.sampleid}_deepvariant.gvcf.gz", emit: gvcf
     path "deepvariant.command.log", emit: runlog
 

@@ -2,8 +2,8 @@
 /* 
 * Copy number calling on aligned reads using QDNAseq (only for hg38)
 */
-process qdnaseq_hg38 {
-    label 'private_node'
+process qdnaseq {
+    //label 'private_node'
     label 'cpu_high'
     label 'mem_high'
     label 'time_mid'
@@ -41,10 +41,16 @@ process qdnaseq_hg38 {
     sorted_bam <- \"!{sorted_bam}\"
     sample_name <- \"!{params.sampleid}\"
     qdnaseq_bin_size <- as.numeric(\"!{qdnaseq_bin_size}\")
-
+    genome <- \"!{params.genome}\"
+    
     options(future.globals.maxSize= 1048576000)
 
-    bins <- getBinAnnotations(binSize=qdnaseq_bin_size, genome="hg38")
+    if (genome == "hg38") {
+        bins <- getBinAnnotations(binSize=qdnaseq_bin_size, genome="hg38")
+    } else {
+        stop("Unsupported genome. Please use 'hg38'.")
+    }
+
     readCounts <- binReadCounts(bins, bamfiles=sorted_bam,chunkSize=100000)
 
     png(filename=paste0(sample_name,"_ReadCounts_",qdnaseq_bin_size, "kb.png"))
