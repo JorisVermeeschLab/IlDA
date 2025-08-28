@@ -61,13 +61,36 @@ process get_baf {
     path vcf
     
     output:
-    path "${vcf.getSimpleName()}_GQ15_DP10_QUAL10_PASS_SNVs_AF.bed", emit: vcf_baf
+    path "${vcf.getSimpleName()}*_PASS_SNVs_AF.bed", emit: vcf_baf
 
-    script:
-    """
-    zcat $vcf | grep -v "^#" | awk 'BEGIN {FS=OFS="\t"} {m=split(\$9,a,":"); n=split(\$10,b,":"); for (i=1; i<=m; i++) {if (a[i]=="VAF") {af=b[i]}; if (a[i]=="GQ") {gq=b[i]}; if (a[i]=="DP") {dp=b[i]}}; if (gq>=15 && dp >=10 && length(\$4)==1 && length(\$5)==1 && \$6>=10 &&  \$7=="PASS") {print \$1 ":" \$2, af}}' > ${vcf.getSimpleName()}_GQ15_DP10_QUAL10_PASS_SNVs_AF.tsv
-    awk 'BEGIN {FS=OFS="\t"} {split(\$1,a,":"); print a[1], a[2]-1, a[2], \$2}' ${vcf.getSimpleName()}_GQ15_DP10_QUAL10_PASS_SNVs_AF.tsv > ${vcf.getSimpleName()}_GQ15_DP10_QUAL10_PASS_SNVs_AF.bed
-    """
+    shell:
+    '''
+    mean_DP=`zcat !{vcf} | grep -v "^#" | awk 'BEGIN {FS=OFS="\t"} {m=split(\$9,a,":"); n=split(\$10,b,":"); for (i=1; i<=m; i++) {if (a[i]=="DP") {sum=sum+b[i]}}} END {print sum/NR}'`
+    echo "Mean DP: $mean_DP"
+    if [[ $(echo "$mean_DP" | bc) < 3 ]]; then
+        DP_cutoff=2
+    elif [[ $(echo "$mean_DP" | bc) < 6 ]]; then
+        DP_cutoff=3
+    elif [[ $(echo "$mean_DP" | bc) < 10 ]]; then
+        DP_cutoff=5
+    else
+        DP_cutoff=10
+    fi
+    echo "DP cutoff: $DP_cutoff"
+
+    mean_GQ=`zcat !{vcf} | grep -v "^#" | awk 'BEGIN {FS=OFS="\t"} {m=split(\$9,a,":"); n=split(\$10,b,":"); for (i=1; i<=m; i++) {if (a[i]=="GQ") {sum=sum+b[i]}}} END {print sum/NR}'`
+    echo "Mean GQ: $mean_GQ"
+    if [[ $(echo "$mean_GQ" | bc) < 5 ]]; then
+        GQ_cutoff=3
+    elif [[ $(echo "$mean_GQ" | bc) < 9 ]]; then
+        GQ_cutoff=5
+    elif [[ $(echo "$mean_GQ" | bc) < 15 ]]; then
+        GQ_cutoff=10
+    else
+        GQ_cutoff=15
+    fi
+    zcat !{vcf} | grep -v "^#" | awk -v GQ_cutoff=$GQ_cutoff -v DP_cutoff=$DP_cutoff 'BEGIN {FS=OFS="\t"} {m=split(\$9,a,":"); n=split(\$10,b,":"); for (i=1; i<=m; i++) {if (a[i]=="VAF") {af=b[i]}; if (a[i]=="GQ") {gq=b[i]}; if (a[i]=="DP") {dp=b[i]}}; if (gq>=GQ_cutoff && dp>=DP_cutoff && length(\$4)==1 && length(\$5)==1 && \$6>=10 &&  \$7=="PASS") {print \$1,\$2-1, \$2, af}}' > !{vcf.getSimpleName()}_DP${DP_cutoff}_GQ${GQ_cutoff}_QUAL10_PASS_SNVs_AF.bed
+    '''
 }
 
 

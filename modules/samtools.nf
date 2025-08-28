@@ -3,7 +3,7 @@
 * Convert SAM to sorted BAM using samtools and compute stats
 */
 process sam_to_sorted_bam {
-    label 'private_node'
+    //label 'private_node'
     label 'cpu_mid'
     label 'mem_high'
     label 'time_mid'
@@ -45,7 +45,7 @@ process sam_to_sorted_bam {
 * Index BAM file with samtools
 */
 process index_bam {
-    label 'private_node'
+    //label 'private_node'
     label 'cpu_low'
     label 'mem_low'
     label 'time_low'

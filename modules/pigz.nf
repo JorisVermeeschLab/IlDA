@@ -29,7 +29,7 @@ process parallel_gzip {
 
 
 process parallel_unzip {
-    //label 'private_node'
+    label 'private_node'
     label 'cpu_mid'
     label 'mem_low'
     label 'time_low'

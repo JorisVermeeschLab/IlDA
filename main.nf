@@ -80,6 +80,27 @@ workflow {
         r2_fastq = Channel.fromPath( params.r2_fastq + "*.fastq.gz", followLinks: true, checkIfExists: true ).collect().sort()
     }
     // Get BAM file from config file if provided
+    else if (params.bam != "" && params.snv_indel_vcf != "")
+    {
+        perform_mapping = "no"
+        bam = Channel.fromPath( params.bam, followLinks: true, checkIfExists: true ).collect()
+        // Index BAM file if necessary
+        if (params.bam_index == "")
+        {
+            index_bam( bam )
+            bam_index = index_bam.out.bam_index
+        }
+        else 
+        {
+            bam_index = Channel.fromPath( params.bam_index, followLinks: true, checkIfExists: true ).collect()
+        }
+        mosdepth(bam, bam_index)
+        /*collect_wgs_metrics(bam, bam_index, genomeref)
+        collect_alignment_summary_metrics(bam, bam_index)
+        collect_insert_size_metrics(bam, bam_index)*/
+        perform_snv_calling = "no"
+        snv_indel_vcf = Channel.fromPath( params.snv_indel_vcf, followLinks: true, checkIfExists: true ).collect()
+    }
     else if (params.bam != "")
     {
         perform_mapping = "no"
@@ -94,9 +115,10 @@ workflow {
         {
             bam_index = Channel.fromPath( params.bam_index, followLinks: true, checkIfExists: true ).collect()
         }
-        /*collect_wgs_metrics(bam, bam_index, genomeref)
+        //mosdepth(bam, bam_index)
+        collect_wgs_metrics(bam, bam_index, genomeref)
         collect_alignment_summary_metrics(bam, bam_index)
-        collect_insert_size_metrics(bam, bam_index)*/
+        collect_insert_size_metrics(bam, bam_index)
     }
     else if (params.snv_indel_vcf != "")
     {
@@ -186,7 +208,7 @@ workflow {
         get_roh_rg(bcftools_roh.out.roh)
         bcftools_roh_viz(snv_indel_vcf,bcftools_roh.out.roh)
         get_baf(snv_indel_vcf)
-        plot_baf_roh(get_baf.out.vcf_baf, get_roh_rg.out.roh_rg)
+        plot_baf_roh(get_baf.out.vcf_baf, get_roh_rg.out.roh_rg, mosdepth.out.mosdepth_50kb_regions)
     }
 
     if (perform_cnv_calling == "yes")
