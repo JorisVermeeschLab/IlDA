@@ -15,7 +15,7 @@ process parallel_gzip {
     path fastq
 
     output:
-    path "${params.sampleid}.fastq.gz", emit: fastqgz
+    path "${fastq}.gz", emit: fastqgz
 
     script:
     """
@@ -23,13 +23,13 @@ process parallel_gzip {
         --best \
         --stdout \
         --processes $task.cpus \
-        $fastq > ${params.sampleid}.fastq.gz
+        $fastq > ${fastq}.gz
     """
 }
 
 
 process parallel_unzip {
-    label 'private_node'
+    //label 'private_node'
     label 'cpu_mid'
     label 'mem_low'
     label 'time_low'
