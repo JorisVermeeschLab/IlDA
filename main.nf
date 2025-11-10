@@ -9,16 +9,16 @@
 nextflow.enable.dsl=2
 
 // Command line shortcuts, quick entry point
-include { clip_reads as clip_R1; clip_reads as clip_R2; merge_fastq_files as merge_R1_files; merge_fastq_files as merge_R2_files; get_baf; get_roh_rg } from './modules/utilities'
-include { parallel_gzip as gzip_R1; parallel_gzip as gzip_R2; parallel_gzip as gzip_flash } from './modules/pigz'
+include { clip_reads as clip_R1; clip_reads as clip_R2; merge_fastq_files as merge_R1_files; merge_fastq_files as merge_R2_files; get_baf; get_roh_rg as get_roh_rg_unfiltered; get_roh_rg as get_roh_rg_filtered } from './modules/utilities'
+include { parallel_gzip as gzip_R1_merged; parallel_gzip as gzip_R2_merged; parallel_gzip as gzip_R1_clipped; parallel_gzip as gzip_R2_clipped; parallel_gzip as gzip_flash } from './modules/pigz'
 include { flash } from './modules/flash'
 include { bwa_mem_paired_end; bwa_mem_single_end } from './modules/bwa'
 include { sam_to_sorted_bam; index_bam } from './modules/samtools'
 include { mark_duplicates; collect_wgs_metrics; collect_insert_size_metrics; collect_alignment_summary_metrics } from './modules/gatk'
 include { mosdepth } from './modules/mosdepth'
 include { deepvariant } from './modules/deepvariant'
-include { bcftools_roh; bcftools_roh_viz } from './modules/bcftools'
-include { plot_baf_roh } from './modules/karyoploter'
+include { bcftools_roh as bcftools_roh_unfiltered; bcftools_roh as bcftools_roh_filtered; bcftools_roh_viz as bcftools_roh_viz_unfiltered; bcftools_roh_viz as bcftools_roh_viz_filtered } from './modules/bcftools'
+include { plot_baf_roh as plot_baf_roh_unfiltered; plot_baf_roh as plot_baf_roh_filtered; plot_density_violin_baf as plot_density_violin_baf_fitered; plot_baf_roh_gc_normalised } from './modules/karyoploter'
 include { qdnaseq as qdnaseq_5kb; qdnaseq as qdnaseq_10kb; qdnaseq as qdnaseq_50kb; qdnaseq as qdnaseq_100kb } from './modules/qdnaseq'
 
 /*
@@ -115,7 +115,7 @@ workflow {
         {
             bam_index = Channel.fromPath( params.bam_index, followLinks: true, checkIfExists: true ).collect()
         }
-        //mosdepth(bam, bam_index)
+        mosdepth(bam, bam_index)
         collect_wgs_metrics(bam, bam_index, genomeref)
         collect_alignment_summary_metrics(bam, bam_index)
         collect_insert_size_metrics(bam, bam_index)
@@ -140,25 +140,25 @@ workflow {
     println "Perform CNV calling (hg38 only): $perform_cnv_calling"
 
     /* Start FASTQ processing */
-    // Perform pre-processing
-    if (perform_clipping == "yes")
-    {
-        clip_R1(r1_fastq, params.clipped_length)
-        clip_R2(r2_fastq, params.clipped_length)
-        r1_fastq = clip_R1.out.clipped_fastq
-        r2_fastq = clip_R2.out.clipped_fastq
-        gzip_R1(r1_fastq)
-        gzip_R2(r2_fastq)
-    }
     // Merging automatically done if clipping is done
     if (perform_merging_files == "yes")
     {
         merge_R1_files(r1_fastq,"R1")
         merge_R2_files(r2_fastq,"R2")
-        r1_fastq = merge_R1_files.out.merged_fastq
-        r2_fastq = merge_R2_files.out.merged_fastq
-        gzip_R1(r1_fastq)
-        gzip_R2(r2_fastq)
+        gzip_R1_merged(merge_R1_files.out.merged_fastq)
+        gzip_R2_merged(merge_R2_files.out.merged_fastq)
+        r1_fastq = gzip_R1_merged.out.fastqgz
+        r2_fastq = gzip_R2_merged.out.fastqgz
+    }
+    // Perform pre-processing
+    if (perform_clipping == "yes")
+    {
+        clip_R1(r1_fastq, params.clipped_length,"R1")
+        clip_R2(r2_fastq, params.clipped_length,"R2")
+        gzip_R1_clipped(clip_R1.out.clipped_fastq)
+        gzip_R2_clipped(clip_R2.out.clipped_fastq)
+        r1_fastq = gzip_R1_clipped.out.fastqgz
+        r2_fastq = gzip_R2_clipped.out.fastqgz
     }
     if (perform_merging_reads == "yes")
     {
@@ -204,11 +204,21 @@ workflow {
     }
     if (perform_roh_calling == "yes")
     {
-        bcftools_roh(snv_indel_vcf)
-        get_roh_rg(bcftools_roh.out.roh)
-        bcftools_roh_viz(snv_indel_vcf,bcftools_roh.out.roh)
         get_baf(snv_indel_vcf)
-        plot_baf_roh(get_baf.out.vcf_baf, get_roh_rg.out.roh_rg, mosdepth.out.mosdepth_50kb_regions)
+        
+        // Compute ROH using unfiltered VCF file
+        /*bcftools_roh_unfiltered(snv_indel_vcf)
+        get_roh_rg_unfiltered(bcftools_roh_unfiltered.out.roh)
+        bcftools_roh_viz_unfiltered(snv_indel_vcf,bcftools_roh_unfiltered.out.roh)
+        plot_baf_roh_unfiltered(get_baf.out.bed_baf, get_roh_rg_unfiltered.out.roh_rg, mosdepth.out.mosdepth_50kb_regions)*/
+
+        // Compute ROH using filtered VCF file (same variants as for BAF plots)
+        bcftools_roh_filtered(get_baf.out.vcf_baf)
+        get_roh_rg_filtered(bcftools_roh_filtered.out.roh)
+        bcftools_roh_viz_filtered(get_baf.out.vcf_baf,bcftools_roh_filtered.out.roh)
+        plot_baf_roh_filtered(get_baf.out.bed_baf, get_roh_rg_filtered.out.roh_rg, mosdepth.out.mosdepth_50kb_regions)
+	    plot_density_violin_baf_fitered(get_baf.out.bed_baf)
+        plot_baf_roh_gc_normalised(get_baf.out.bed_baf, get_roh_rg_filtered.out.roh_rg, mosdepth.out.mosdepth_50kb_regions)
     }
 
     if (perform_cnv_calling == "yes")
