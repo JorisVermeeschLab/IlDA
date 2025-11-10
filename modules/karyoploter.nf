@@ -193,6 +193,11 @@ process plot_baf_roh_gc_normalised {
         custom.genome <- toGRanges(horse_cytoband)
         chrs<-c("chr1", "chr2", "chr3","chr4","chr5","chr6","chr7","chr8","chr9","chr10","chr11","chr12","chr13","chr14","chr15","chr16","chr17","chr18","chr19","chr20","chr21","chr22","chr23","chr24","chr25","chr26","chr27","chr28","chr29","chr30","chr31","chrX")
         gc<-read.csv(file=gc_file,header=TRUE,sep="\t")
+    } else if (genome == "equCab3_w_chrY") {
+        horse_cytoband<-read.csv(file="/Horse/equCab3_cytoband.tsv",header=TRUE,sep="\t")
+        custom.genome <- toGRanges(horse_cytoband)
+        chrs<-c("chr1", "chr2", "chr3","chr4","chr5","chr6","chr7","chr8","chr9","chr10","chr11","chr12","chr13","chr14","chr15","chr16","chr17","chr18","chr19","chr20","chr21","chr22","chr23","chr24","chr25","chr26","chr27","chr28","chr29","chr30","chr31","chrX","chrY")
+        gc<-read.csv(file=gc_file,header=TRUE,sep="\t")
     } else if (genome == "hg38") {
         custom.genome <- "hg38"
         chrs<-c("chr1", "chr2", "chr3","chr4","chr5","chr6","chr7","chr8","chr9","chr10","chr11","chr12","chr13","chr14","chr15","chr16","chr17","chr18","chr19","chr20","chr21","chr22","chrX","chrY")
@@ -223,7 +228,16 @@ process plot_baf_roh_gc_normalised {
     cov$chr_start <- paste(cov$chr,cov$start,sep="_")
     gc$chr_start <- paste(gc$X.1_usercol,gc$X2_usercol,sep="_")
     cov_gc <- merge(cov, gc, by.x="chr_start", by.y="chr_start")
-    cov_gc_chr <- cov_gc[cov_gc$chr=="chr1" | cov_gc$chr=="chr2" | cov_gc$chr=="chr3" | cov_gc$chr=="chr4" | cov_gc$chr=="chr5" | cov_gc$chr=="chr6" | cov_gc$chr=="chr7" | cov_gc$chr=="chr8" | cov_gc$chr=="chr9" | cov_gc$chr=="chr10" | cov_gc$chr=="chr11" | cov_gc$chr=="chr12" | cov_gc$chr=="chr13" | cov_gc$chr=="chr14" | cov_gc$chr=="chr15" | cov_gc$chr=="chr16" | cov_gc$chr=="chr17" | cov_gc$chr=="chr18" | cov_gc$chr=="chr19" | cov_gc$chr=="chr20" | cov_gc$chr=="chr21" | cov_gc$chr=="chr22" | cov_gc$chr=="chr23" | cov_gc$chr=="chr24" | cov_gc$chr=="chr25" | cov_gc$chr=="chr26" | cov_gc$chr=="chr27" | cov_gc$chr=="chr28" | cov_gc$chr=="chr29" | cov_gc$chr=="chr30" | cov_gc$chr=="chr31" | cov_gc$chr=="chrX",]
+    # Select chromosomes
+    if (genome == "equCab3") {
+        cov_gc_chr <- cov_gc[cov_gc$chr=="chr1" | cov_gc$chr=="chr2" | cov_gc$chr=="chr3" | cov_gc$chr=="chr4" | cov_gc$chr=="chr5" | cov_gc$chr=="chr6" | cov_gc$chr=="chr7" | cov_gc$chr=="chr8" | cov_gc$chr=="chr9" | cov_gc$chr=="chr10" | cov_gc$chr=="chr11" | cov_gc$chr=="chr12" | cov_gc$chr=="chr13" | cov_gc$chr=="chr14" | cov_gc$chr=="chr15" | cov_gc$chr=="chr16" | cov_gc$chr=="chr17" | cov_gc$chr=="chr18" | cov_gc$chr=="chr19" | cov_gc$chr=="chr20" | cov_gc$chr=="chr21" | cov_gc$chr=="chr22" | cov_gc$chr=="chr23" | cov_gc$chr=="chr24" | cov_gc$chr=="chr25" | cov_gc$chr=="chr26" | cov_gc$chr=="chr27" | cov_gc$chr=="chr28" | cov_gc$chr=="chr29" | cov_gc$chr=="chr30" | cov_gc$chr=="chr31" | cov_gc$chr=="chrX",]
+    } else if (genome == "equCab3_w_chrY") {
+        cov_gc_chr <- cov_gc[cov_gc$chr=="chr1" | cov_gc$chr=="chr2" | cov_gc$chr=="chr3" | cov_gc$chr=="chr4" | cov_gc$chr=="chr5" | cov_gc$chr=="chr6" | cov_gc$chr=="chr7" | cov_gc$chr=="chr8" | cov_gc$chr=="chr9" | cov_gc$chr=="chr10" | cov_gc$chr=="chr11" | cov_gc$chr=="chr12" | cov_gc$chr=="chr13" | cov_gc$chr=="chr14" | cov_gc$chr=="chr15" | cov_gc$chr=="chr16" | cov_gc$chr=="chr17" | cov_gc$chr=="chr18" | cov_gc$chr=="chr19" | cov_gc$chr=="chr20" | cov_gc$chr=="chr21" | cov_gc$chr=="chr22" | cov_gc$chr=="chr23" | cov_gc$chr=="chr24" | cov_gc$chr=="chr25" | cov_gc$chr=="chr26" | cov_gc$chr=="chr27" | cov_gc$chr=="chr28" | cov_gc$chr=="chr29" | cov_gc$chr=="chr30" | cov_gc$chr=="chr31" | cov_gc$chr=="chrX" | cov_gc$chr=="chrY",]
+    } else if (genome == "hg38") {
+        cov_gc_chr <- cov_gc[cov_gc$chr=="chr1" | cov_gc$chr=="chr2" | cov_gc$chr=="chr3" | cov_gc$chr=="chr4" | cov_gc$chr=="chr5" | cov_gc$chr=="chr6" | cov_gc$chr=="chr7" | cov_gc$chr=="chr8" | cov_gc$chr=="chr9" | cov_gc$chr=="chr10" | cov_gc$chr=="chr11" | cov_gc$chr=="chr12" | cov_gc$chr=="chr13" | cov_gc$chr=="chr14" | cov_gc$chr=="chr15" | cov_gc$chr=="chr16" | cov_gc$chr=="chr17" | cov_gc$chr=="chr18" | cov_gc$chr=="chr19" | cov_gc$chr=="chr20" | cov_gc$chr=="chr21" | cov_gc$chr=="chr22" | cov_gc$chr=="chrX" | cov_gc$chr=="chrY",]
+    } else {
+        stop("Unsupported genome. Please use 'equCab3' or 'hg38'.")
+    }
     # Fit LOESS regression
     loess_model <- loess(norm_median ~ X5_pct_gc, data = cov_gc_chr, span = 0.3)
     # Predict expected coverage from GC content

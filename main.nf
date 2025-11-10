@@ -218,7 +218,9 @@ workflow {
         bcftools_roh_viz_filtered(get_baf.out.vcf_baf,bcftools_roh_filtered.out.roh)
         plot_baf_roh_filtered(get_baf.out.bed_baf, get_roh_rg_filtered.out.roh_rg, mosdepth.out.mosdepth_50kb_regions)
 	    plot_density_violin_baf_fitered(get_baf.out.bed_baf)
-        plot_baf_roh_gc_normalised(get_baf.out.bed_baf, get_roh_rg_filtered.out.roh_rg, mosdepth.out.mosdepth_50kb_regions)
+        if (params.gc_file != "") {
+            plot_baf_roh_gc_normalised(get_baf.out.bed_baf, get_roh_rg_filtered.out.roh_rg, mosdepth.out.mosdepth_50kb_regions)
+        }
     }
 
     if (perform_cnv_calling == "yes")
