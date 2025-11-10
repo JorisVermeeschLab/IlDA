@@ -20,7 +20,7 @@ workDir = '/scratch/leuven/315/vsc31555'
 ```
 2. Adapt the following parameters to suit your environment:
 ```
-module load Java/13.0.2
+module load Java/17.0.6
 export APPTAINER_TMPDIR='/scratch/leuven/315/vsc31555/runPipeline/tmp'
 export APPTAINERENV_TMPDIR='/scratch/leuven/315/vsc31555/runPipeline/tmp'
 export APPTAINER_CACHEDIR='/scratch/leuven/315/vsc31555/runPipeline/tmp'
